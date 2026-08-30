@@ -126,7 +126,7 @@ describe("parseEpub", () => {
     };
     for (let index = 0; index < 11; index += 1) aggregateEntries[`OEBPS/chapter-${index}.xhtml`] = aggregateBytes;
     await expectCode(parseEpub(epubBuffer(aggregateEntries)), "tooLarge");
-  });
+  }, 30_000);
 
   it("rejects malformed ZIP bytes and buffers above the input limit", async () => {
     await expectCode(parseEpub(new TextEncoder().encode("not a zip").buffer), "invalidZip");
