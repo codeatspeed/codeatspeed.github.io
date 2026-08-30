@@ -147,6 +147,7 @@ describe("reader surface", () => {
     vi.spyOn(persistence, "getPosition").mockRejectedValue(new StorageUnavailableError("position unavailable"));
     render(<ReaderPage document={documentFixture()} initialNotice={{ kind: "storage-unavailable", message: "import unavailable" }} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(screen.getByText("import unavailable")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Dismiss notice" }));
     expect(screen.queryByText("import unavailable")).not.toBeInTheDocument();
