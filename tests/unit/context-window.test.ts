@@ -109,6 +109,32 @@ describe("chooseContextWindow", () => {
     expect(result.scaleX).toBeLessThanOrEqual(1);
     expect(result.scaleX).toBeGreaterThan(0);
   });
+  it("scales long words against each rail-relative side when the rail is asymmetric", () => {
+    const active = token("long");
+    const result = chooseContextWindow({
+      left: [],
+      active,
+      right: [],
+      phraseSize: 1,
+      maxWidth: 400,
+      surfaceWidth: 200,
+      railX: 30,
+      horizontalPadding: 10,
+      gapWidth: 5,
+      baseFontScale: 1,
+      minFontScale: 0.5,
+      measure: () => ({ width: 400, beforePivotWidth: 0, pivotWidth: 10 }),
+    });
+    const beforeSide = result.active.beforePivotWidth + result.active.pivotWidth / 2;
+    const afterSide = result.active.width - result.active.beforePivotWidth - result.active.pivotWidth / 2;
+    const leftEdge = 30 - beforeSide * result.scaleX;
+    const rightEdge = 30 + afterSide * result.scaleX;
+
+    expect(result.mode).toBe("long-word-hold");
+    expect(result.scaleX).toBeLessThanOrEqual(1);
+    expect(leftEdge).toBeGreaterThanOrEqual(10);
+    expect(rightEdge).toBeLessThanOrEqual(190);
+  });
 
   it("uses pivot-centered bounds and honors rail-side padding", () => {
     const asymmetricActive = token("abcdefghij", 3);

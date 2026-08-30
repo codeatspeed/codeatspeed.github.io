@@ -138,8 +138,17 @@ export function chooseContextWindow(input: ContextWindowInput): ContextWindowRes
     return { left: [], active: reducedActive, right: [], mode: "focus", fontScale: minFontScale, scaleX: 1 };
   }
 
-  const innerWidth = Math.max(0, Math.min(finiteNonNegative(input.maxWidth), input.surfaceWidth - 2 * finiteNonNegative(input.horizontalPadding)));
-  const scaleX = reducedActive.width > 0 ? Math.min(1, innerWidth / reducedActive.width) : 1;
+  const padding = finiteNonNegative(input.horizontalPadding);
+  const leftAvailable = Math.max(0, input.railX - padding);
+  const rightAvailable = Math.max(0, input.surfaceWidth - input.railX - padding);
+  const beforeSide = reducedActive.beforePivotWidth + reducedActive.pivotWidth / 2;
+  const afterSide = reducedActive.width - reducedActive.beforePivotWidth - reducedActive.pivotWidth / 2;
+  const leftScale = beforeSide > 0 ? leftAvailable / beforeSide : 1;
+  const rightScale = afterSide > 0 ? rightAvailable / afterSide : 1;
+  const widthScale = reducedActive.width > 0 && Number.isFinite(input.maxWidth) && input.maxWidth > 0
+    ? input.maxWidth / reducedActive.width
+    : 1;
+  const scaleX = Math.max(0, Math.min(1, leftScale, rightScale, widthScale));
   return {
     left: [],
     active: reducedActive,

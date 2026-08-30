@@ -49,6 +49,20 @@ describe("createPlayableStream", () => {
       { documentId: "doc", sectionIndex: 0, sentenceIndex: 0, tokenIndex: 3 },
     ]);
   });
+  it("consumes punctuation separated from a word by whitespace", () => {
+    const document = makeDocument([
+      makeToken("Hello", "word"),
+      makeToken(" ", "whitespace"),
+      makeToken("!", "punctuation"),
+      makeToken(" ", "whitespace"),
+    ]);
+
+    const stream = createPlayableStream(document);
+
+    expect(stream).toHaveLength(1);
+    expect(stream[0]?.punctuationAfter).toBe("!");
+    expect(stream[0]?.position.tokenIndex).toBe(0);
+  });
 
   it("flattens sections and sentences in document order", () => {
     const document: Document = {

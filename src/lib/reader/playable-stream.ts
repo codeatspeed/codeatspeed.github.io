@@ -24,8 +24,12 @@ export function createPlayableStream(document: Document): PlayableToken[] {
           let punctuationAfter = "";
           for (let nextIndex = tokenIndex + 1; nextIndex < sentence.tokens.length; nextIndex += 1) {
             const following = sentence.tokens[nextIndex]!;
-            if (following.kind !== "punctuation") break;
-            punctuationAfter += following.text;
+            if (following.kind === "punctuation") {
+              punctuationAfter += following.text;
+              continue;
+            }
+            if (following.kind === "whitespace") continue;
+            break;
           }
           if (punctuationAfter.length === 0) punctuationAfter = token.punctuationAfter;
 
