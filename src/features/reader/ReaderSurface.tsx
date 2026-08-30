@@ -27,9 +27,9 @@ function WordSpans({ token, active = false }: { token: Token; active?: boolean }
   );
 }
 
-function FocusWord({ token, offset, typographyRef }: { token: Token; offset: number; typographyRef: RefObject<HTMLDivElement | null> }) {
+function FocusWord({ token, offset, fontScale, typographyRef }: { token: Token; offset: number; fontScale: number; typographyRef: RefObject<HTMLDivElement | null> }) {
   return (
-    <div ref={typographyRef} className="reader-focus" data-testid="reader-focus-word" style={{ transform: `translateX(${offset}px)` }}>
+    <div ref={typographyRef} className="reader-focus" data-testid="reader-focus-word" style={{ fontSize: `${fontScale}rem`, transform: `translateX(${offset}px)` }}>
       <WordSpans token={token} active />
       <span className="visually-hidden" role="img" aria-label={token.text}>{token.text}</span>
     </div>
@@ -76,7 +76,8 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     const typography = typographyRef.current ?? zone;
     const computed = typography ? window.getComputedStyle(typography) : undefined;
     const parsedSize = computed ? Number.parseFloat(computed.fontSize) : 0;
-    const fontSize = (parsedSize > 0 ? parsedSize : 16) * scale;
+    const baseScale = Number.isFinite(state.settings.fontScale) && state.settings.fontScale > 0 ? state.settings.fontScale : 1;
+    const fontSize = (parsedSize > 0 ? parsedSize : 16) * (scale / baseScale);
     const fontFamily = computed?.fontFamily ?? "sans-serif";
     const fontWeight = computed?.fontWeight ?? "400";
     const fontStyle = computed?.fontStyle ?? "normal";
@@ -108,7 +109,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     const beforePivotWidth = widths.slice(0, token.pivotIndex).reduce((total, width) => total + width, 0);
     const pivotWidth = widths[token.pivotIndex] ?? 0;
     return { width: widths.reduce((total, width) => total + width, 0), beforePivotWidth, pivotWidth };
-  }, []);
+  }, [state.settings.fontScale]);
 
   useEffect(() => {
     const zone = zoneRef.current;
@@ -132,7 +133,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     }
     window.addEventListener("resize", reportMetrics);
     return () => window.removeEventListener("resize", reportMetrics);
-  }, [measureToken, onSurfaceMetrics, state.settings.fontScale, view.activeToken]);
+  }, [measureToken, onSurfaceMetrics, state.settings.fontScale, view.activeToken, view.layout.fontScale]);
 
   useEffect(() => {
     onRenderedMode({ position: view.activePosition, mode: state.mode === "focus" ? "focus" : view.layout.mode });
@@ -142,7 +143,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     <section className="reader-surface" data-testid="reader-surface" aria-label={`${document.title} reading surface`}>
       <div className="reader-surface__zone" ref={zoneRef}>
         <div className="reader-surface__rail" aria-hidden="true" />
-        {state.mode === "focus" ? <FocusWord token={view.activeToken} offset={railOffset} typographyRef={typographyRef} /> : <ContextWords layout={view.layout} typographyRef={typographyRef} />}
+        {state.mode === "focus" ? <FocusWord token={view.activeToken} offset={railOffset} fontScale={state.settings.fontScale} typographyRef={typographyRef} /> : <ContextWords layout={view.layout} typographyRef={typographyRef} />}
         <span ref={measureRef} className="reader-surface__measure" aria-hidden="true" />
         <canvas ref={canvasRef} className="reader-surface__canvas" aria-hidden="true" />
       </div>

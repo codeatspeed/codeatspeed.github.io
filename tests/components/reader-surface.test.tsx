@@ -57,6 +57,14 @@ describe("reader surface", () => {
     expect(screen.getByRole("img", { name: "alpha" })).toBeInTheDocument();
     expect(screen.queryByTestId("reader-context")).not.toBeInTheDocument();
   });
+  it("keeps non-default font scale consistent between rendered word and pivot measurement", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, fontScale: 1.5 });
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    expect(screen.getByTestId("reader-focus-word").getAttribute("style")).toContain("font-size: 1.5rem");
+    expect(screen.getByTestId("reader-pivot")).toHaveTextContent("p");
+  });
 
   it("restores persisted context mode and supports context peek", async () => {
     vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, showContextByDefault: true });
