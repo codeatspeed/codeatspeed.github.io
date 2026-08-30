@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import type { Document, Token } from "../../domain/document";
 import type { ReaderState } from "../../domain/reader-state";
@@ -27,19 +27,19 @@ function WordSpans({ token, active = false }: { token: Token; active?: boolean }
   );
 }
 
-function FocusWord({ token, offset }: { token: Token; offset: number }) {
+function FocusWord({ token, offset, typographyRef }: { token: Token; offset: number; typographyRef: RefObject<HTMLDivElement | null> }) {
   return (
-    <div className="reader-focus" data-testid="reader-focus-word" style={{ transform: `translateX(${offset}px)` }}>
+    <div ref={typographyRef} className="reader-focus" data-testid="reader-focus-word" style={{ transform: `translateX(${offset}px)` }}>
       <WordSpans token={token} active />
       <span className="visually-hidden" role="img" aria-label={token.text}>{token.text}</span>
     </div>
   );
 }
 
-function ContextWords({ layout }: { layout: ContextWindowResult }) {
+function ContextWords({ layout, typographyRef }: { layout: ContextWindowResult; typographyRef: RefObject<HTMLDivElement | null> }) {
   if (layout.mode === "long-word-hold") {
     return (
-      <div className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
+      <div ref={typographyRef} className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
         <span className="reader-context__long-word" style={{ transform: `scaleX(${layout.scaleX})`, transformOrigin: `${layout.active.beforePivotWidth + layout.active.pivotWidth / 2}px center` }}>
           <WordSpans token={layout.active.token} active />
           <span className="visually-hidden" role="img" aria-label={layout.active.token.text}>{layout.active.token.text}</span>
@@ -48,7 +48,7 @@ function ContextWords({ layout }: { layout: ContextWindowResult }) {
     );
   }
   return (
-    <div className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
+    <div ref={typographyRef} className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
       <div className="reader-context__left" aria-hidden="true">
         {layout.left.map((item, index) => <WordSpans key={`${item.token.text}-${index}`} token={item.token} />)}
       </div>
@@ -65,6 +65,7 @@ function ContextWords({ layout }: { layout: ContextWindowResult }) {
 
 export function ReaderSurface({ document, state, view, onRenderedMode, onSurfaceMetrics }: ReaderSurfaceProps) {
   const zoneRef = useRef<HTMLDivElement>(null);
+  const typographyRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [railOffset, setRailOffset] = useState(0);
@@ -72,14 +73,20 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
   const measureToken = useCallback((token: Token, scale: number): TokenMeasurement => {
     const measureElement = measureRef.current;
     const zone = zoneRef.current;
-    const computed = zone ? window.getComputedStyle(zone) : undefined;
-    const fontSize = computed ? Number.parseFloat(computed.fontSize) * scale : scale;
+    const typography = typographyRef.current ?? zone;
+    const computed = typography ? window.getComputedStyle(typography) : undefined;
+    const parsedSize = computed ? Number.parseFloat(computed.fontSize) : 0;
+    const fontSize = (parsedSize > 0 ? parsedSize : 16) * scale;
     const fontFamily = computed?.fontFamily ?? "sans-serif";
+    const fontWeight = computed?.fontWeight ?? "400";
+    const fontStyle = computed?.fontStyle ?? "normal";
+    const letterSpacing = computed?.letterSpacing ?? "normal";
     const canvas = canvasRef.current;
     let context: CanvasRenderingContext2D | undefined;
     if (canvas && !/jsdom/i.test(navigator.userAgent)) {
       try {
         context = canvas.getContext("2d") ?? undefined;
+        if (context) context.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
       } catch {
         context = undefined;
       }
@@ -88,6 +95,9 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
       if (measureElement) {
         measureElement.style.fontFamily = fontFamily;
         measureElement.style.fontSize = `${fontSize}px`;
+        measureElement.style.fontWeight = fontWeight;
+        measureElement.style.fontStyle = fontStyle;
+        measureElement.style.letterSpacing = letterSpacing;
         measureElement.textContent = grapheme;
         const measured = measureElement.getBoundingClientRect().width || measureElement.offsetWidth;
         if (measured > 0) return measured;
@@ -132,7 +142,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     <section className="reader-surface" data-testid="reader-surface" aria-label={`${document.title} reading surface`}>
       <div className="reader-surface__zone" ref={zoneRef}>
         <div className="reader-surface__rail" aria-hidden="true" />
-        {state.mode === "focus" ? <FocusWord token={view.activeToken} offset={railOffset} /> : <ContextWords layout={view.layout} />}
+        {state.mode === "focus" ? <FocusWord token={view.activeToken} offset={railOffset} typographyRef={typographyRef} /> : <ContextWords layout={view.layout} typographyRef={typographyRef} />}
         <span ref={measureRef} className="reader-surface__measure" aria-hidden="true" />
         <canvas ref={canvasRef} className="reader-surface__canvas" aria-hidden="true" />
       </div>

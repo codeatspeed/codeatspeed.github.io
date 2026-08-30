@@ -34,7 +34,7 @@ export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
         onBack={() => controller.state.expanded ? controller.setExpanded(false) : window.history.back()}
         onDismissNotice={controller.dismissNotice}
       />
-      <p className="reader-announcement visually-hidden" role="status" aria-live="polite">{controller.announcement}</p>
+      <p className="reader-announcement visually-hidden" aria-live="polite">{controller.announcement}</p>
     </div>
   );
   return (

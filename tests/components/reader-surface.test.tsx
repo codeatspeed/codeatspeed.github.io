@@ -86,7 +86,7 @@ describe("reader surface", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/bravo/i);
+    expect(screen.getByText(/Paused: bravo/i)).toBeInTheDocument();
 
     const wpm = screen.getByRole("spinbutton", { name: /words per minute/i });
     await userEvent.clear(wpm);
