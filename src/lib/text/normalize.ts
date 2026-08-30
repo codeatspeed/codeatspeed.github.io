@@ -4,13 +4,11 @@ import type {
   Paragraph,
   Sentence,
   Section,
-  TextSegmentKind,
   Token,
 } from "../../domain/document";
 import { segmentGraphemes, segmentWords, selectPivotIndex, type TextSegment } from "./segment";
 
-const TERMINAL_PUNCTUATION = /[.!?]/u;
-
+const TERMINAL_PUNCTUATION = /[.!?\u3002\uFF01\uFF1F\u061F]/u;
 function trimEmptyBoundaryLines(text: string): string {
   const lines = text.split("\n");
   let first = 0;
@@ -131,10 +129,12 @@ export function normalizeText(
 
   if (!hasWord) throw new Error("Text must contain at least one word");
 
-  const section: Section = { paragraphs };
+  const title = metadata.title ?? "Untitled";
+  const id = documentId(normalized, title, metadata.author);
+  const section: Section = { id: `${id}-section-0`, paragraphs };
   return {
-    id: documentId(normalized, metadata.title, metadata.author),
-    ...(metadata.title === undefined ? {} : { title: metadata.title }),
+    id,
+    title,
     ...(metadata.author === undefined ? {} : { author: metadata.author }),
     sections: [section],
   };

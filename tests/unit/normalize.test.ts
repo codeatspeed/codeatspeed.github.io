@@ -23,6 +23,24 @@ describe("normalizeText", () => {
     expect(document.sections[0]?.paragraphs[1]?.sentences[0]?.tokens.map((token) => token.text).join(""))
       .toBe("Second line!");
   });
+  it("uses a required title and deterministic section identifier", () => {
+    const first = normalizeText("Alpha");
+    const second = normalizeText("Alpha");
+
+    expect(first.title).toBe("Untitled");
+    expect(first.sections[0]?.id).toBe(`${first.id}-section-0`);
+    expect(first.sections[0]?.id).toBe(second.sections[0]?.id);
+  });
+
+  it("recognizes Unicode sentence terminators", () => {
+    const document = normalizeText("你好。下一句！ سؤال؟");
+    const sentences = document.sections[0]?.paragraphs[0]?.sentences ?? [];
+
+    expect(sentences).toHaveLength(3);
+    expect(sentences[0]?.tokens.map((token) => token.text).join("")).toBe("你好。");
+    expect(sentences[1]?.tokens.map((token) => token.text).join("")).toBe("下一句！ ");
+    expect(sentences[2]?.tokens.map((token) => token.text).join("")).toBe("سؤال؟");
+  });
 
   it("marks sentence boundaries and gives the final section boundary precedence", () => {
     const document = normalizeText("One sentence. Another sentence.\n\nFinal paragraph");

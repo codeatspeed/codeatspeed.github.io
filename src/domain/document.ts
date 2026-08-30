@@ -20,12 +20,13 @@ export type Paragraph = {
 };
 
 export type Section = {
+  id: string;
   paragraphs: Paragraph[];
 };
 
 export type Document = {
   id: string;
-  title?: string;
+  title: string;
   author?: string;
   sections: Section[];
 };

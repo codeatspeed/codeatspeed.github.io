@@ -28,7 +28,7 @@ function isWhitespace(text: string): boolean {
 }
 
 function isWordText(text: string): boolean {
-  return /[\p{L}\p{M}\p{N}]/u.test(text);
+  return /[\p{L}\p{N}]/u.test(text);
 }
 
 function fallbackSegmentWords(text: string): TextSegment[] {

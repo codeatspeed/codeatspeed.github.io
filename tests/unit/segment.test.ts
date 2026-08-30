@@ -1,4 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const originalSegmenter = Intl.Segmenter;
+
+afterEach(() => {
+  Object.defineProperty(Intl, "Segmenter", {
+    configurable: true,
+    value: originalSegmenter,
+  });
+  vi.restoreAllMocks();
+});
+
 
 import { segmentGraphemes, segmentWords, selectPivotIndex } from "../../src/lib/text/segment";
 
@@ -35,6 +46,13 @@ describe("segmentWords", () => {
     ]);
   });
 });
+  it("uses grapheme-splitter and fallback classification without splitting combining sequences", () => {
+    Object.defineProperty(Intl, "Segmenter", { configurable: true, value: undefined });
+
+    expect(segmentGraphemes("e\u0301 👩🏽‍💻")).toEqual(["e\u0301", " ", "👩🏽‍💻"]);
+    expect(segmentWords("e\u0301")).toEqual([{ text: "e\u0301", kind: "word" }]);
+    expect(segmentWords("\u0301?!")).toEqual([{ text: "\u0301?!", kind: "punctuation" }]);
+  });
 
 describe("selectPivotIndex", () => {
   it("chooses a deterministic in-bounds pivot", () => {
