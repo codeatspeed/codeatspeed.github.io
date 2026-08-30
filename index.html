@@ -8,13 +8,7 @@
       content="Read / Focus is a quiet, local speed reader for books, essays, and notes."
     />
     <meta name="theme-color" content="#101311" />
-    <link rel="canonical" href="about:blank" data-relative-href="./" />
-    <script>
-      const canonical = document.querySelector('link[rel="canonical"]');
-      if (canonical instanceof HTMLLinkElement) {
-        canonical.href = new URL(canonical.dataset.relativeHref ?? "./", window.location.href).href;
-      }
-    </script>
+    <link rel="canonical" href="data:text/plain,%BASE_URL%" />
     <meta property="og:title" content="Read / Focus — Focused Speed Reader" />
     <meta
       property="og:description"
