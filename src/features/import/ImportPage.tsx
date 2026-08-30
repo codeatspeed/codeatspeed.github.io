@@ -94,6 +94,7 @@ export function ImportPage({ onImported }: ImportPageProps) {
           role="button"
           tabIndex={busy ? -1 : 0}
           aria-label="Drop an EPUB here or choose a file"
+          onClick={openPicker}
           onKeyDown={onDropZoneKeyDown}
           onDragOver={(event) => event.preventDefault()}
           onDrop={onDrop}

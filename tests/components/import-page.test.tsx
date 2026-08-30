@@ -118,6 +118,17 @@ describe("import landing page", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't read that epub/i);
   });
 
+  it("opens the picker when the visible drop zone is clicked", () => {
+    render(<App />);
+    const dropZone = screen.getByRole("button", { name: /drop an epub/i });
+    const picker = screen.getByLabelText(/epub file/i);
+    const click = vi.spyOn(picker, "click");
+
+    fireEvent.click(dropZone);
+
+    expect(click).toHaveBeenCalledOnce();
+  });
+
   it("activates the drop zone from the keyboard", async () => {
     const user = userEvent.setup();
     render(<App />);
