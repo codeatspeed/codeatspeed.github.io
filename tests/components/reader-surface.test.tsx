@@ -85,6 +85,7 @@ describe("reader surface", () => {
 
     render(<ReaderPage document={documentFixture()} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     const progress = screen.getByRole("progressbar");
     expect(progress).toHaveAttribute("aria-valuenow", "0");
 
@@ -92,7 +93,8 @@ describe("reader surface", () => {
     expect(screen.getByTestId("reader-active-word")).toHaveTextContent("bravo");
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
 
-    await userEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
     expect(screen.getByText(/Paused: bravo/i)).toBeInTheDocument();
 
