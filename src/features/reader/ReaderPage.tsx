@@ -16,6 +16,8 @@ export type ReaderPageProps = {
 export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
   const controller = useReaderController(document, initialNotice);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeExpanded = useCallback(() => controller.setExpanded(false), [controller.setExpanded]);
   const reader = (
     <div className="reader-page__inner">
@@ -33,7 +35,7 @@ export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
         onMode={controller.setMode}
         onPhraseSize={controller.setPhraseSize}
         onExpanded={() => controller.setExpanded(true)}
-        onSettings={() => setSettingsOpen(true)}
+        onSettings={openSettings}
         onBack={() => controller.state.expanded ? controller.setExpanded(false) : window.history.back()}
         onDismissNotice={controller.dismissNotice}
       />
@@ -43,7 +45,7 @@ export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
   return (
     <main className={`reader-page${controller.state.expanded ? " reader-page--expanded" : ""}${controller.state.settings.contrast === "high" ? " reader-page--high-contrast" : ""}${controller.state.settings.reducedMotion ? " reader-page--reduced-motion" : ""}`}>
       {controller.state.expanded ? <ModalLayer open label="Expanded reader" onClose={closeExpanded}>{reader}</ModalLayer> : reader}
-      {settingsOpen ? <SettingsDrawer settings={controller.state.settings} onChange={controller.setSettings} onClose={() => setSettingsOpen(false)} /> : null}
+      {settingsOpen ? <SettingsDrawer settings={controller.state.settings} disabled={controller.state.status === "loading"} onChange={controller.setSettings} onClose={closeSettings} /> : null}
     </main>
   );
 }

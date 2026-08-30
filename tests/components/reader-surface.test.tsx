@@ -238,6 +238,9 @@ describe("reader surface", () => {
     expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Settings words per minute" })).toHaveValue(720);
     expect(screen.getByRole("spinbutton", { name: "Settings phrase size" })).toHaveValue(6);
+    expect(screen.getByRole("spinbutton", { name: "Font scale" })).toHaveValue(1.35);
+    expect(screen.getByRole("combobox", { name: "Contrast" })).toHaveValue("high");
+    expect(screen.getByRole("combobox", { name: "Pause profile" })).toHaveValue("generous");
     expect(screen.getByRole("checkbox", { name: "Reduced motion" })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: "Show context by default" })).toBeChecked();
   });
@@ -247,15 +250,23 @@ describe("reader surface", () => {
     vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
     render(<ReaderPage document={documentFixture()} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
-
     await userEvent.click(screen.getByRole("button", { name: "Settings" }));
-    expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Close settings" })).toHaveFocus();
+    const lastDrawerControl = screen.getByRole("checkbox", { name: "Show context by default" });
+    lastDrawerControl.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(screen.getByRole("button", { name: "Close settings" })).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(lastDrawerControl).toHaveFocus();
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Reader settings" })).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveFocus();
 
     await userEvent.click(screen.getByRole("button", { name: "Settings" }));
     await userEvent.click(screen.getByRole("button", { name: "Close settings" }));
     expect(screen.queryByRole("dialog", { name: "Reader settings" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveFocus();
   });
 
   it("persists drawer changes and keeps the interaction usable when storage rejects writes", async () => {
@@ -273,9 +284,12 @@ describe("reader surface", () => {
     saveSettings.mockRejectedValueOnce(new StorageUnavailableError("settings drawer write unavailable"));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Contrast" }), "high");
     await waitFor(() => expect(screen.getByText("settings drawer write unavailable")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Dismiss notice" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss notice" }));
+    expect(screen.queryByText("settings drawer write unavailable")).not.toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
-  });
 
+  });
   it("provides labelled controls and pressed state for reader mode toggles", async () => {
     vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
     vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
@@ -285,5 +299,31 @@ describe("reader surface", () => {
     expect(screen.getByRole("button", { name: "Context" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuetext", "0 percent");
     expect(screen.getByTestId("reader-announcement")).toHaveAttribute("aria-live", "polite");
+  });
+  it("keeps settings disabled until persisted settings restoration finishes", async () => {
+    let resolveSettings: ((settings: typeof DEFAULT_READER_SETTINGS) => void) | undefined;
+    const settingsRestore = new Promise<typeof DEFAULT_READER_SETTINGS>((resolve) => {
+      resolveSettings = resolve;
+    });
+    vi.spyOn(persistence, "getSettings").mockReturnValue(settingsRestore);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    resolveSettings?.(DEFAULT_READER_SETTINGS);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Settings" })).toBeEnabled();
+  });
+
+  it("closes only the settings drawer when Escape is pressed in expanded mode", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("button", { name: "Expand reader" }));
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Reader settings" })).not.toBeInTheDocument());
+    expect(screen.getByRole("dialog", { name: "Expanded reader" })).toBeInTheDocument();
+    expect(window.history.state).toMatchObject({ expanded: true });
   });
 });

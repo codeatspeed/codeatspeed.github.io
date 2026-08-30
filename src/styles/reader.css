@@ -347,6 +347,8 @@
 .settings-drawer__toggle {
   grid-template-columns: auto 1fr;
   align-items: center;
+  min-block-size: 2.75rem;
+  padding: 0.25rem 0;
 }
 
 .settings-drawer__toggle input {

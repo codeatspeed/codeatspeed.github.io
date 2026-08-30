@@ -37,7 +37,7 @@ export function ReaderControls({ document, state, progress, disabled = false, on
         </div>
         <div className="reader-controls__meta-actions">
           <button type="button" onClick={onExpanded} aria-label="Expand reader">Expand</button>
-          <button type="button" onClick={onSettings} aria-label="Settings">Settings</button>
+          <button type="button" onClick={onSettings} aria-label="Settings" disabled={disabled}>Settings</button>
         </div>
       </div>
       {state.notice ? (
