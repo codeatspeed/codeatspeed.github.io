@@ -213,4 +213,77 @@ describe("reader surface", () => {
     fireEvent.change(screen.getByRole("spinbutton", { name: /words per minute/i }), { target: { value: "800" } });
     await waitFor(() => expect(screen.getByText("settings write unavailable")).toBeInTheDocument());
   });
+  it("restores every persisted setting and applies accessibility state classes", async () => {
+    const settings = {
+      ...DEFAULT_READER_SETTINGS,
+      wpm: 720,
+      phraseSize: 6,
+      fontScale: 1.35,
+      contrast: "high" as const,
+      pauseProfile: "generous" as const,
+      reducedMotion: true,
+      showContextByDefault: true,
+    };
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(settings);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+
+    expect(screen.getByRole("main")).toHaveClass("reader-page--high-contrast", "reader-page--reduced-motion");
+    expect(screen.getByText("720 WPM")).toBeInTheDocument();
+    expect(screen.getByTestId("reader-context")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Settings words per minute" })).toHaveValue(720);
+    expect(screen.getByRole("spinbutton", { name: "Settings phrase size" })).toHaveValue(6);
+    expect(screen.getByRole("checkbox", { name: "Reduced motion" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Show context by default" })).toBeChecked();
+  });
+
+  it("closes the settings drawer with its close control or Escape", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Reader settings" })).not.toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+    await userEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    expect(screen.queryByRole("dialog", { name: "Reader settings" })).not.toBeInTheDocument();
+  });
+
+  it("persists drawer changes and keeps the interaction usable when storage rejects writes", async () => {
+    const saveSettings = vi.spyOn(persistence, "saveSettings");
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+    await userEvent.clear(screen.getByRole("spinbutton", { name: "Settings words per minute" }));
+    await userEvent.type(screen.getByRole("spinbutton", { name: "Settings words per minute" }), "650");
+    await waitFor(() => expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ wpm: 650 })));
+
+    saveSettings.mockRejectedValueOnce(new StorageUnavailableError("settings drawer write unavailable"));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Contrast" }), "high");
+    await waitFor(() => expect(screen.getByText("settings drawer write unavailable")).toBeInTheDocument());
+    expect(screen.getByRole("dialog", { name: "Reader settings" })).toBeInTheDocument();
+  });
+
+  it("provides labelled controls and pressed state for reader mode toggles", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Focus" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Context" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuetext", "0 percent");
+    expect(screen.getByTestId("reader-announcement")).toHaveAttribute("aria-live", "polite");
+  });
 });

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Document, Token } from "../../domain/document";
 import type { ReaderNotice, ReaderPosition, ReaderState } from "../../domain/reader-state";
-import { DEFAULT_READER_SETTINGS, type ReaderSettings } from "../../domain/settings";
+import { DEFAULT_READER_SETTINGS, normalizeReaderSettings, type ReaderSettings } from "../../domain/settings";
 import { getPosition, getSettings, savePosition, saveSettings, StorageUnavailableError } from "../../lib/persistence/database";
 import { chooseContextWindow, type ContextWindowResult, type TokenMeasurement } from "../../lib/reader/context-window";
 import { createPlayableStream, type PlayableToken } from "../../lib/reader/playable-stream";
@@ -45,6 +45,7 @@ export type ReaderController = {
   setExpanded(expanded: boolean): void;
   restartFromCurrentSection(): void;
   dismissNotice(): void;
+  setSettings(settings: ReaderSettings): void;
 };
 
 const positionEqual = (left: ReaderPosition, right: ReaderPosition): boolean =>
@@ -53,23 +54,6 @@ const positionEqual = (left: ReaderPosition, right: ReaderPosition): boolean =>
   left.sentenceIndex === right.sentenceIndex &&
   left.tokenIndex === right.tokenIndex;
 
-function validSettings(value: ReaderSettings | undefined): ReaderSettings {
-  const source = value ?? DEFAULT_READER_SETTINGS;
-  const wpm = Number.isFinite(source.wpm) ? Math.min(10_000, Math.max(1, source.wpm)) : DEFAULT_READER_SETTINGS.wpm;
-  const phraseSize = Number.isFinite(source.phraseSize) ? Math.max(1, Math.floor(source.phraseSize)) : DEFAULT_READER_SETTINGS.phraseSize;
-  const fontScale = Number.isFinite(source.fontScale) && source.fontScale > 0 ? source.fontScale : DEFAULT_READER_SETTINGS.fontScale;
-  return {
-    ...DEFAULT_READER_SETTINGS,
-    ...source,
-    wpm,
-    phraseSize,
-    fontScale,
-    contrast: source.contrast === "high" ? "high" : DEFAULT_READER_SETTINGS.contrast,
-    pauseProfile: source.pauseProfile === "minimal" || source.pauseProfile === "generous" ? source.pauseProfile : DEFAULT_READER_SETTINGS.pauseProfile,
-    reducedMotion: source.reducedMotion === true,
-    showContextByDefault: source.showContextByDefault === true,
-  };
-}
 
 function fallbackMeasureToken(token: Token, scale: number): TokenMeasurement {
   const widths = token.graphemes.map((grapheme) => grapheme.length * scale);
@@ -160,7 +144,7 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
       let settings = DEFAULT_READER_SETTINGS;
       let notice = initialNotice;
       try {
-        settings = validSettings(await getSettings());
+        settings = normalizeReaderSettings(await getSettings());
       } catch (error: unknown) {
         if (error instanceof StorageUnavailableError || error instanceof Error) {
           notice ??= { kind: "storage-unavailable", message: error instanceof Error ? error.message : "Reader storage is unavailable" };
@@ -268,6 +252,16 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
     applyIndex(firstInSection < 0 ? 0 : firstInSection, "Restarted");
     setState((value) => ({ ...value, status: "paused" }));
   }, [applyIndex, stream]);
+  const setSettings = useCallback((next: ReaderSettings) => {
+    const settings = normalizeReaderSettings(next);
+    setState((value) => ({
+      ...value,
+      settings,
+      mode: settings.showContextByDefault ? "context" : value.mode,
+      renderMode: settings.showContextByDefault ? "context" : value.renderMode,
+    }));
+    persistSettings(settings);
+  }, [persistSettings]);
   const dismissNotice = useCallback(() => setState((current) => ({ ...current, notice: undefined })), []);
 
   const setExpanded = useCallback((expanded: boolean) => {
@@ -380,5 +374,5 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
     };
   }, [initial, state.mode, state.position, state.settings.fontScale, state.settings.phraseSize, stream, surfaceMetrics]);
 
-  return { state, view, announcement, togglePlayback, stepPrevious, stepNext, setWpm, setMode, setSurfaceMetrics, setRenderedMode, setPhraseSize, setExpanded, restartFromCurrentSection, dismissNotice };
+  return { state, view, announcement, togglePlayback, stepPrevious, stepNext, setWpm, setMode, setSurfaceMetrics, setRenderedMode, setPhraseSize, setSettings, setExpanded, restartFromCurrentSection, dismissNotice };
 }

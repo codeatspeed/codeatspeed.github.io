@@ -1,8 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import ModalLayer from "../../components/ModalLayer";
 import type { Document } from "../../domain/document";
 import type { ReaderNotice } from "../../domain/reader-state";
+import { SettingsDrawer } from "../settings/SettingsDrawer";
 import { ReaderControls } from "./ReaderControls";
 import { ReaderSurface } from "./ReaderSurface";
 import { useReaderController } from "./useReaderController";
@@ -14,6 +15,7 @@ export type ReaderPageProps = {
 };
 export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
   const controller = useReaderController(document, initialNotice);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const closeExpanded = useCallback(() => controller.setExpanded(false), [controller.setExpanded]);
   const reader = (
     <div className="reader-page__inner">
@@ -31,15 +33,17 @@ export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
         onMode={controller.setMode}
         onPhraseSize={controller.setPhraseSize}
         onExpanded={() => controller.setExpanded(true)}
+        onSettings={() => setSettingsOpen(true)}
         onBack={() => controller.state.expanded ? controller.setExpanded(false) : window.history.back()}
         onDismissNotice={controller.dismissNotice}
       />
-      <p className="reader-announcement visually-hidden" aria-live="polite">{controller.announcement}</p>
+      <p className="reader-announcement visually-hidden" data-testid="reader-announcement" aria-live="polite">{controller.announcement}</p>
     </div>
   );
   return (
-    <main className={`reader-page${controller.state.expanded ? " reader-page--expanded" : ""}`}>
+    <main className={`reader-page${controller.state.expanded ? " reader-page--expanded" : ""}${controller.state.settings.contrast === "high" ? " reader-page--high-contrast" : ""}${controller.state.settings.reducedMotion ? " reader-page--reduced-motion" : ""}`}>
       {controller.state.expanded ? <ModalLayer open label="Expanded reader" onClose={closeExpanded}>{reader}</ModalLayer> : reader}
+      {settingsOpen ? <SettingsDrawer settings={controller.state.settings} onChange={controller.setSettings} onClose={() => setSettingsOpen(false)} /> : null}
     </main>
   );
 }

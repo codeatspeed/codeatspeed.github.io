@@ -16,10 +16,11 @@ export type ReaderControlsProps = {
   onMode: (mode: "focus" | "context") => void;
   onPhraseSize: (value: number) => void;
   onExpanded: () => void;
+  onSettings: () => void;
   onBack: () => void;
   onDismissNotice: () => void;
 };
-export function ReaderControls({ document, state, progress, disabled = false, onPrevious, onTogglePlayback, onNext, onRestart, onWpm, onMode, onPhraseSize, onExpanded, onBack, onDismissNotice }: ReaderControlsProps) {
+export function ReaderControls({ document, state, progress, disabled = false, onPrevious, onTogglePlayback, onNext, onRestart, onWpm, onMode, onPhraseSize, onExpanded, onSettings, onBack, onDismissNotice }: ReaderControlsProps) {
   const playing = state.status === "playing";
   const [wpmInput, setWpmInput] = useState(String(state.settings.wpm));
   useEffect(() => {
@@ -34,10 +35,13 @@ export function ReaderControls({ document, state, progress, disabled = false, on
           <h1>{document.title}</h1>
           {document.author ? <p className="reader-controls__author">by {document.author}</p> : null}
         </div>
-        <button type="button" onClick={onExpanded} aria-label="Expand reader">Expand</button>
+        <div className="reader-controls__meta-actions">
+          <button type="button" onClick={onExpanded} aria-label="Expand reader">Expand</button>
+          <button type="button" onClick={onSettings} aria-label="Settings">Settings</button>
+        </div>
       </div>
       {state.notice ? (
-        <div className="reader-controls__notice" role="status">
+        <div className="reader-controls__notice" role="status" aria-live="polite" aria-atomic="true">
           <span>{state.notice.message}</span>
           <button type="button" onClick={onDismissNotice} aria-label="Dismiss notice">Dismiss</button>
         </div>
@@ -55,7 +59,7 @@ export function ReaderControls({ document, state, progress, disabled = false, on
             const value = event.target.value;
             setWpmInput(value);
             if (value !== "") onWpm(Number(value));
-          }} disabled={disabled} aria-label="Words per minute" />
+          }} disabled={disabled} aria-label="Words per minute" aria-valuenow={state.settings.wpm} aria-valuetext={`${state.settings.wpm} words per minute`} />
         </label>
         <span aria-label="Actual words per minute">{state.settings.wpm} WPM</span>
         <div className="reader-controls__modes" aria-label="Reading mode">
@@ -65,13 +69,13 @@ export function ReaderControls({ document, state, progress, disabled = false, on
         {state.mode === "context" ? (
           <label>
             Phrase size
-            <input type="number" min="1" max="12" value={state.settings.phraseSize} onChange={(event) => onPhraseSize(Number(event.target.value))} disabled={disabled} />
+            <input type="number" min="1" max="12" value={state.settings.phraseSize} onChange={(event) => onPhraseSize(Number(event.target.value))} disabled={disabled} aria-label="Phrase size" />
           </label>
         ) : null}
       </div>
       <div className="reader-controls__progress">
         <span>Progress</span>
-        <progress max="100" value={progress * 100} aria-valuenow={Math.round(progress * 100)} aria-label="Reading progress" />
+        <progress max="100" value={progress * 100} aria-valuenow={Math.round(progress * 100)} aria-valuetext={`${Math.round(progress * 100)} percent`} aria-label="Reading progress" />
         <span>{Math.round(progress * 100)}%</span>
       </div>
     </div>

@@ -241,3 +241,166 @@
   visibility: hidden;
   pointer-events: none;
 }
+
+.reader-page {
+  overflow-x: hidden;
+}
+
+.reader-page--high-contrast {
+  color: var(--color-contrast-foreground);
+  background: var(--color-contrast-background);
+}
+
+.reader-page--high-contrast .reader-surface__zone,
+.reader-page--high-contrast .modal-layer__content,
+.reader-page--high-contrast .settings-drawer {
+  border-color: var(--color-contrast-foreground);
+  background: var(--color-contrast-background);
+}
+
+.reader-page--high-contrast .reader-word__before,
+.reader-page--high-contrast .reader-word__after,
+.reader-page--high-contrast .reader-context__left,
+.reader-page--high-contrast .reader-context__right {
+  color: var(--color-contrast-foreground);
+}
+
+.reader-page--high-contrast .reader-word__pivot,
+.reader-page--high-contrast .reader-surface__rail {
+  color: var(--color-contrast-accent);
+  background-color: var(--color-contrast-accent);
+}
+
+.reader-page--reduced-motion *,
+.reader-page--reduced-motion *::before,
+.reader-page--reduced-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.reader-controls button,
+.reader-controls input,
+.reader-controls select,
+.settings-drawer button,
+.settings-drawer input,
+.settings-drawer select {
+  min-block-size: 2.75rem;
+}
+
+.reader-controls__meta-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.settings-drawer {
+  position: fixed;
+  z-index: 20;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  width: min(100%, 24rem);
+  padding: clamp(1rem, 4vw, 2rem);
+  overflow-y: auto;
+  border-inline-start: 1px solid rgba(244, 241, 232, 0.24);
+  background: var(--color-graphite-900);
+  box-shadow: -1rem 0 3rem rgba(0, 0, 0, 0.3);
+}
+
+.settings-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.settings-drawer h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.settings-drawer__fields {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-drawer__fields label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.settings-drawer__fields input,
+.settings-drawer__fields select,
+.settings-drawer button {
+  width: 100%;
+  border: 1px solid rgba(244, 241, 232, 0.24);
+  border-radius: 0.25rem;
+  background: rgba(244, 241, 232, 0.07);
+  color: inherit;
+  padding: 0.5rem 0.7rem;
+}
+
+.settings-drawer__toggle {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.settings-drawer__toggle input {
+  width: 1.25rem;
+  min-block-size: 1.25rem;
+}
+
+@media (max-width: 40rem) {
+  .reader-page {
+    padding: 1rem;
+  }
+
+  .reader-surface__zone {
+    min-block-size: 14rem;
+    padding-inline: 0.75rem;
+  }
+
+  .reader-focus,
+  .reader-context {
+    font-size: clamp(1.7rem, 11vw, 3rem);
+  }
+
+  .reader-controls__meta {
+    align-items: flex-start;
+  }
+
+  .reader-controls__meta > :nth-child(2) {
+    min-width: 0;
+    flex: 1 1 10rem;
+  }
+
+  .reader-controls__actions,
+  .reader-controls__settings,
+  .reader-controls__progress {
+    align-items: stretch;
+  }
+
+  .reader-controls__actions > button,
+  .reader-controls__settings > *,
+  .reader-controls__progress > * {
+    max-width: 100%;
+  }
+
+  .reader-controls__settings label {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .reader-controls__settings input {
+    width: min(8rem, 45vw);
+  }
+
+  .reader-controls__progress progress {
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
+}
