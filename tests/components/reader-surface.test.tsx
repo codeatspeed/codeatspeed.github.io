@@ -173,12 +173,13 @@ describe("reader surface", () => {
     expect(screen.getByTestId("reader-active-word")).toHaveTextContent("bravo");
   });
   it("renders only one active word when context falls back to long-word hold", async () => {
-    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, showContextByDefault: true });
+    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, fontScale: 1.5, showContextByDefault: true });
     vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
     const longDocument = documentFixture();
     longDocument.sections[0]!.paragraphs[0]!.sentences[0]!.tokens = [word("supercalifragilisticexpialidocious".repeat(30), 2)];
     render(<ReaderPage document={longDocument} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    expect(screen.getByTestId("reader-context")).toHaveAttribute("data-layout-mode", "long-word-hold");
     expect(screen.getAllByTestId("reader-active-word")).toHaveLength(1);
   });
   it("persists changed reader settings and surfaces write failures", async () => {

@@ -39,7 +39,7 @@ function FocusWord({ token, offset, fontScale, typographyRef }: { token: Token; 
 function ContextWords({ layout, typographyRef }: { layout: ContextWindowResult; typographyRef: RefObject<HTMLDivElement | null> }) {
   if (layout.mode === "long-word-hold") {
     return (
-      <div ref={typographyRef} className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
+      <div ref={typographyRef} className="reader-context" data-testid="reader-context" data-layout-mode="long-word-hold" style={{ fontSize: `${layout.fontScale}rem` }}>
         <span className="reader-context__long-word" style={{ transform: `scaleX(${layout.scaleX})`, transformOrigin: `${layout.active.beforePivotWidth + layout.active.pivotWidth / 2}px center` }}>
           <WordSpans token={layout.active.token} active />
           <span className="visually-hidden" role="img" aria-label={layout.active.token.text}>{layout.active.token.text}</span>
@@ -48,7 +48,7 @@ function ContextWords({ layout, typographyRef }: { layout: ContextWindowResult; 
     );
   }
   return (
-    <div ref={typographyRef} className="reader-context" data-testid="reader-context" style={{ fontSize: `${layout.fontScale}rem` }}>
+    <div ref={typographyRef} className="reader-context" data-testid="reader-context" data-layout-mode={layout.mode} style={{ fontSize: `${layout.fontScale}rem` }}>
       <div className="reader-context__left" aria-hidden="true">
         {layout.left.map((item, index) => <WordSpans key={`${item.token.text}-${index}`} token={item.token} />)}
       </div>
@@ -69,6 +69,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
   const measureRef = useRef<HTMLSpanElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [railOffset, setRailOffset] = useState(0);
+  const renderedTypographyScale = state.mode === "context" ? view.layout.fontScale : state.settings.fontScale;
 
   const measureToken = useCallback((token: Token, scale: number): TokenMeasurement => {
     const measureElement = measureRef.current;
@@ -76,7 +77,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     const typography = typographyRef.current ?? zone;
     const computed = typography ? window.getComputedStyle(typography) : undefined;
     const parsedSize = computed ? Number.parseFloat(computed.fontSize) : 0;
-    const baseScale = Number.isFinite(state.settings.fontScale) && state.settings.fontScale > 0 ? state.settings.fontScale : 1;
+    const baseScale = Number.isFinite(renderedTypographyScale) && renderedTypographyScale > 0 ? renderedTypographyScale : 1;
     const fontSize = (parsedSize > 0 ? parsedSize : 16) * (scale / baseScale);
     const fontFamily = computed?.fontFamily ?? "sans-serif";
     const fontWeight = computed?.fontWeight ?? "400";
@@ -109,7 +110,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     const beforePivotWidth = widths.slice(0, token.pivotIndex).reduce((total, width) => total + width, 0);
     const pivotWidth = widths[token.pivotIndex] ?? 0;
     return { width: widths.reduce((total, width) => total + width, 0), beforePivotWidth, pivotWidth };
-  }, [state.settings.fontScale]);
+  }, [renderedTypographyScale]);
 
   useEffect(() => {
     const zone = zoneRef.current;
