@@ -77,7 +77,7 @@ export function ImportPage({ onImported }: ImportPageProps) {
   };
 
   return (
-    <main className="app-shell import-page">
+    <main className="app-shell import-page" data-reading-intent="focus">
       <header className="import-page__header">
         <div className="app-shell__eyebrow">Read / Focus</div>
         <p className="import-page__mark" aria-label="Read Focus product mark">RF</p>

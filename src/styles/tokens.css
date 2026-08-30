@@ -22,4 +22,26 @@
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --content-width: 72rem;
   --focus-ring: 0 0 0 0.2rem var(--color-lime-300);
+  --color-ivory-300: rgba(230, 224, 208, 0.68);
+  --color-lime-500: var(--color-lime-400);
+  --color-orange-500: var(--color-orange-400);
+  --color-graphite-glow: rgba(213, 243, 106, 0.1);
+  --color-graphite-border: rgba(230, 224, 208, 0.16);
+  --color-graphite-border-strong: rgba(230, 224, 208, 0.28);
+  --color-graphite-overlay: rgba(16, 19, 17, 0.84);
+  --gradient-graphite: linear-gradient(135deg, var(--color-graphite-950) 0%, var(--color-graphite-900) 52%, var(--color-graphite-950) 100%);
+  --shadow-editorial: 0 1.5rem 4rem rgba(0, 0, 0, 0.24);
+  --shadow-drawer: -1rem 0 3rem rgba(0, 0, 0, 0.3);
+  --radius-editorial: 0.5rem;
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --color-ivory-muted: rgba(230, 224, 208, 0.42);
+  --color-ivory-wash: rgba(230, 224, 208, 0.07);
+  --color-lime-wash: rgba(213, 243, 106, 0.1);
+  --color-lime-wash-strong: rgba(213, 243, 106, 0.16);
+  --color-orange-wash: rgba(242, 138, 61, 0.1);
+  --color-graphite-surface: rgba(16, 19, 17, 0.42);
+  --color-graphite-field: rgba(16, 19, 17, 0.5);
+  --color-graphite-field-focus: rgba(16, 19, 17, 0.78);
+  --color-lime-halo: rgba(213, 243, 106, 0.06);
+  --color-orange-hover: rgba(242, 138, 61, 0.12);
 }

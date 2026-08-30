@@ -5,8 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Read / Focus is a focused speed reader for books and notes."
+      content="Read / Focus is a quiet, local speed reader for books, essays, and notes."
     />
+    <meta name="theme-color" content="#101311" />
+    <link rel="canonical" href="about:blank" data-relative-href="./" />
+    <script>
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical instanceof HTMLLinkElement) {
+        canonical.href = new URL(canonical.dataset.relativeHref ?? "./", window.location.href).href;
+      }
+    </script>
+    <meta property="og:title" content="Read / Focus — Focused Speed Reader" />
+    <meta
+      property="og:description"
+      content="A quiet, local reading space for books, essays, and notes."
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <title>Read / Focus — Focused Speed Reader</title>
   </head>
   <body>

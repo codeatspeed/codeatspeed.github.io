@@ -40,7 +40,7 @@ function ContextWords({ layout, typographyRef }: { layout: ContextWindowResult; 
   if (layout.mode === "long-word-hold") {
     return (
       <div ref={typographyRef} className="reader-context" data-testid="reader-context" data-layout-mode="long-word-hold" style={{ fontSize: `${layout.fontScale}rem` }}>
-        <span className="reader-context__long-word" style={{ transform: `scaleX(${layout.scaleX})`, transformOrigin: `${layout.active.beforePivotWidth + layout.active.pivotWidth / 2}px center` }}>
+        <span className="reader-context__long-word" style={{ transform: `scaleX(${layout.scaleX})`, transformOrigin: "0 center", insetInlineStart: `${-(layout.active.beforePivotWidth + layout.active.pivotWidth / 2) * layout.scaleX}px` }}>
           <WordSpans token={layout.active.token} active />
           <span className="visually-hidden" role="img" aria-label={layout.active.token.text}>{layout.active.token.text}</span>
         </span>
@@ -141,9 +141,14 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
   }, [onRenderedMode, state.mode, view.activePosition, view.layout.mode]);
 
   return (
-    <section className="reader-surface" data-testid="reader-surface" aria-label={`${document.title} reading surface`}>
+    <section
+      className="reader-surface"
+      data-testid="reader-surface"
+      data-reader-mode={state.mode}
+      aria-label={`${document.title} ${state.mode === "focus" ? "focus mode" : "context peek"} reading surface`}
+    >
       <div className="reader-surface__zone" ref={zoneRef}>
-        <div className="reader-surface__rail" aria-hidden="true" />
+        <div className="reader-surface__rail" data-testid="reader-rail" aria-hidden="true" />
         {state.mode === "focus" ? <FocusWord token={view.activeToken} offset={railOffset} fontScale={state.settings.fontScale} typographyRef={typographyRef} /> : <ContextWords layout={view.layout} typographyRef={typographyRef} />}
         <span ref={measureRef} className="reader-surface__measure" aria-hidden="true" />
         <canvas ref={canvasRef} className="reader-surface__canvas" aria-hidden="true" />

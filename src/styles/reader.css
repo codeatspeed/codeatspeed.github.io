@@ -12,13 +12,14 @@
 
 .reader-page {
   min-height: 100vh;
-  padding: 2rem clamp(1rem, 4vw, 4rem);
-  color: var(--color-ivory-100, #f4f1e8);
-  background: var(--color-ink-900, #11130f);
+  padding: clamp(1rem, 4vw, 2rem) clamp(1rem, 4vw, 4rem);
+  color: var(--color-ivory-100);
+  background: var(--gradient-graphite);
 }
 
 .reader-page__inner {
-  width: min(100%, 72rem);
+  width: min(100%, var(--content-width));
+  min-width: 0;
   margin: 0 auto;
 }
 
@@ -34,26 +35,34 @@
   column-gap: 1rem;
   padding-inline: 2rem;
   overflow: hidden;
-  border: 1px solid rgba(244, 241, 232, 0.15);
-  background: rgba(244, 241, 232, 0.03);
+  isolation: isolate;
+  border: 1px solid var(--color-graphite-border);
+  border-radius: var(--radius-editorial);
+  background:
+    radial-gradient(circle at 50% 50%, var(--color-lime-halo), transparent 42%),
+    var(--color-graphite-surface);
+  box-shadow: var(--shadow-editorial);
 }
 
 .reader-surface__rail {
   position: absolute;
+  z-index: 0;
   inset-block: 15%;
   left: 50%;
   width: 2px;
-  background: var(--color-lime-500, #b9df46);
-  opacity: 0.72;
+  background: var(--color-lime-500);
+  opacity: 0.78;
 }
 
 .reader-focus,
 .reader-context {
   position: absolute;
   left: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   white-space: nowrap;
+  font-family: var(--font-serif);
   font-size: clamp(2rem, 7vw, 5rem);
   line-height: 1;
 }
@@ -66,15 +75,16 @@
 .reader-word {
   display: inline-flex;
   align-items: baseline;
+  white-space: nowrap;
 }
 
 .reader-word__before,
 .reader-word__after {
-  color: var(--color-ivory-100, #f4f1e8);
+  color: var(--color-ivory-100);
 }
 
 .reader-word__pivot {
-  color: var(--color-lime-500, #b9df46);
+  color: var(--color-lime-300);
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.12em;
@@ -83,6 +93,7 @@
 .reader-context {
   left: 50%;
   gap: 1rem;
+  max-inline-size: calc(100% - 1rem);
   transform: translateX(-50%);
 }
 
@@ -90,11 +101,12 @@
 .reader-context__right {
   display: flex;
   gap: 1rem;
-  color: rgba(244, 241, 232, 0.42);
+  color: var(--color-ivory-muted);
 }
 
 .reader-context__active {
   display: inline-flex;
+  color: var(--color-ivory-100);
 }
 
 .reader-context__long-word {
@@ -106,9 +118,10 @@
 .reader-surface__section,
 .reader-controls__eyebrow {
   margin: 0.75rem 0 0;
-  color: rgba(244, 241, 232, 0.6);
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  color: var(--color-ivory-300);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -124,6 +137,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
   flex-wrap: wrap;
 }
 
@@ -132,37 +146,65 @@
 }
 
 .reader-controls h1 {
+  max-width: 26ch;
   margin: 0;
-  font-size: clamp(1.35rem, 3vw, 2.2rem);
+  color: var(--color-ivory-100);
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  overflow-wrap: anywhere;
 }
 
 .reader-controls__author {
-  margin: 0.15rem 0 0;
-  color: rgba(244, 241, 232, 0.65);
+  margin: 0.3rem 0 0;
+  color: var(--color-ivory-300);
 }
 
 .reader-controls button,
-.reader-controls input {
-  border: 1px solid rgba(244, 241, 232, 0.24);
+.reader-controls input,
+.reader-controls select {
+  border: 1px solid var(--color-graphite-border);
   border-radius: 0.25rem;
-  background: rgba(244, 241, 232, 0.07);
+  background: var(--color-ivory-wash);
   color: inherit;
   padding: 0.5rem 0.7rem;
 }
 
-.reader-controls button:hover:not(:disabled) {
-  border-color: var(--color-lime-500, #b9df46);
+.reader-controls button:hover:not(:disabled),
+.reader-controls button[aria-pressed="true"] {
+  border-color: var(--color-lime-300);
+  color: var(--color-lime-300);
+  background: var(--color-lime-wash);
 }
 
 .reader-controls button:disabled {
   cursor: wait;
   opacity: 0.45;
 }
+.reader-controls__modes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reader-controls button[aria-label="Pause"] {
+  border-color: var(--color-orange-300);
+  color: var(--color-orange-300);
+}
+
+.reader-controls button[aria-label="Pause"]:hover:not(:disabled) {
+  border-color: var(--color-orange-400);
+  background: var(--color-orange-hover);
+}
+
 
 .reader-controls__settings label {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--color-ivory-200);
+  font-size: 0.86rem;
 }
 
 .reader-controls__settings input {
@@ -174,31 +216,35 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.7rem 0.9rem;
-  border-inline-start: 3px solid var(--color-lime-500, #b9df46);
-  background: rgba(185, 223, 70, 0.1);
+  border: 1px solid var(--color-graphite-border);
+  border-inline-start: 3px solid var(--color-orange-300);
+  background: var(--color-orange-wash);
 }
 
 .reader-controls__notice button {
   padding: 0.25rem 0.5rem;
+  color: var(--color-orange-300);
 }
 
 .reader-controls__progress {
-  color: rgba(244, 241, 232, 0.7);
+  color: var(--color-ivory-300);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .reader-controls__progress progress {
   width: min(100%, 30rem);
-  accent-color: var(--color-lime-500, #b9df46);
+  accent-color: var(--color-lime-500);
 }
-
 .modal-layer {
   position: fixed;
   z-index: 10;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.78);
+  padding: clamp(0.5rem, 2vw, 2rem);
+  background: var(--color-graphite-overlay);
 }
 
 .modal-layer__backdrop {
@@ -213,7 +259,14 @@
   width: min(100%, 90rem);
   max-height: 100%;
   overflow: auto;
-  background: var(--color-ink-900, #11130f);
+  border: 1px solid var(--color-graphite-border-strong);
+  border-radius: var(--radius-editorial);
+  background: var(--gradient-graphite);
+  box-shadow: var(--shadow-editorial);
+}
+
+.modal-layer__content .reader-page {
+  min-height: min(100vh, 60rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -225,12 +278,21 @@
 
 .modal-layer--idle .reader-controls {
   opacity: 0.14;
-  transition: opacity 180ms ease;
+  transition: opacity 260ms var(--ease-editorial);
 }
 
 .modal-layer--idle .reader-controls:hover,
 .modal-layer--idle .reader-controls:focus-within {
   opacity: 1;
+}
+
+.modal-layer .reader-controls__meta-actions button:first-child {
+  display: none;
+}
+
+.modal-layer .reader-controls__back {
+  border-color: var(--color-lime-300);
+  color: var(--color-lime-300);
 }
 
 .reader-surface__measure,
@@ -306,9 +368,9 @@
   width: min(100%, 24rem);
   padding: clamp(1rem, 4vw, 2rem);
   overflow-y: auto;
-  border-inline-start: 1px solid rgba(244, 241, 232, 0.24);
+  border-inline-start: 1px solid var(--color-graphite-border-strong);
   background: var(--color-graphite-900);
-  box-shadow: -1rem 0 3rem rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-drawer);
 }
 
 .settings-drawer__header {
@@ -337,9 +399,9 @@
 .settings-drawer__fields select,
 .settings-drawer button {
   width: 100%;
-  border: 1px solid rgba(244, 241, 232, 0.24);
+  border: 1px solid var(--color-graphite-border);
   border-radius: 0.25rem;
-  background: rgba(244, 241, 232, 0.07);
+  background: var(--color-ivory-wash);
   color: inherit;
   padding: 0.5rem 0.7rem;
 }
