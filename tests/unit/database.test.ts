@@ -100,11 +100,14 @@ describe("reader persistence", () => {
     expect(await getLastOpenedDocumentId()).toBe(document.id);
 
     const rawDatabase = await openReaderDatabase();
-    expect(await rawDatabase.get("documents", document.id)).toEqual(document);
-    expect(await rawDatabase.get("positions", document.id)).toEqual(overwrittenPosition);
-    expect(await rawDatabase.get("settings", "settings")).toEqual(customSettings);
-    expect(await rawDatabase.get("metadata", "last-opened")).toBe(document.id);
-    rawDatabase.close();
+    try {
+      expect(await rawDatabase.get("documents", document.id)).toEqual(document);
+      expect(await rawDatabase.get("positions", document.id)).toEqual(overwrittenPosition);
+      expect(await rawDatabase.get("settings", "settings")).toEqual(customSettings);
+      expect(await rawDatabase.get("metadata", "last-opened")).toBe(document.id);
+    } finally {
+      rawDatabase.close();
+    }
   });
 
 
