@@ -1,0 +1,232 @@
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.reader-page {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 4rem);
+  color: var(--color-ivory-100, #f4f1e8);
+  background: var(--color-ink-900, #11130f);
+}
+
+.reader-page__inner {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+}
+
+.reader-surface {
+  margin: 1rem 0 2rem;
+}
+
+.reader-surface__zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(14rem, 48vh, 30rem);
+  overflow: hidden;
+  border: 1px solid rgba(244, 241, 232, 0.15);
+  background: rgba(244, 241, 232, 0.03);
+}
+
+.reader-surface__rail {
+  position: absolute;
+  inset-block: 15%;
+  left: 50%;
+  width: 2px;
+  background: var(--color-lime-500, #b9df46);
+  opacity: 0.72;
+}
+
+.reader-focus,
+.reader-context {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+  font-size: clamp(2rem, 7vw, 5rem);
+  line-height: 1;
+}
+
+.reader-focus {
+  top: 50%;
+  transform-origin: center;
+}
+
+.reader-word {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.reader-word__before,
+.reader-word__after {
+  color: var(--color-ivory-100, #f4f1e8);
+}
+
+.reader-word__pivot {
+  color: var(--color-lime-500, #b9df46);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+.reader-context {
+  left: 50%;
+  gap: 1rem;
+  transform: translateX(-50%);
+}
+
+.reader-context__left,
+.reader-context__right {
+  display: flex;
+  gap: 1rem;
+  color: rgba(244, 241, 232, 0.42);
+}
+
+.reader-context__active {
+  display: inline-flex;
+}
+
+.reader-context__long-word {
+  position: absolute;
+  inset-inline-start: 0;
+  pointer-events: none;
+}
+
+.reader-surface__section,
+.reader-controls__eyebrow {
+  margin: 0.75rem 0 0;
+  color: rgba(244, 241, 232, 0.6);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reader-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.reader-controls__meta,
+.reader-controls__actions,
+.reader-controls__settings,
+.reader-controls__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reader-controls__meta {
+  justify-content: space-between;
+}
+
+.reader-controls h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2.2rem);
+}
+
+.reader-controls__author {
+  margin: 0.15rem 0 0;
+  color: rgba(244, 241, 232, 0.65);
+}
+
+.reader-controls button,
+.reader-controls input {
+  border: 1px solid rgba(244, 241, 232, 0.24);
+  border-radius: 0.25rem;
+  background: rgba(244, 241, 232, 0.07);
+  color: inherit;
+  padding: 0.5rem 0.7rem;
+}
+
+.reader-controls button:hover:not(:disabled) {
+  border-color: var(--color-lime-500, #b9df46);
+}
+
+.reader-controls button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
+.reader-controls__settings label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reader-controls__settings input {
+  width: 6rem;
+}
+
+.reader-controls__notice {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-inline-start: 3px solid var(--color-lime-500, #b9df46);
+  background: rgba(185, 223, 70, 0.1);
+}
+
+.reader-controls__notice button {
+  padding: 0.25rem 0.5rem;
+}
+
+.reader-controls__progress {
+  color: rgba(244, 241, 232, 0.7);
+}
+
+.reader-controls__progress progress {
+  width: min(100%, 30rem);
+  accent-color: var(--color-lime-500, #b9df46);
+}
+
+.modal-layer {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.modal-layer__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+}
+
+.modal-layer__content {
+  position: relative;
+  width: min(100%, 90rem);
+  max-height: 100%;
+  overflow: auto;
+  background: var(--color-ink-900, #11130f);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-controls,
+  .reader-surface * {
+    transition: none !important;
+  }
+}
+
+.modal-layer--idle .reader-controls {
+  opacity: 0.14;
+  transition: opacity 180ms ease;
+}
+
+.modal-layer--idle .reader-controls:hover,
+.modal-layer--idle .reader-controls:focus-within {
+  opacity: 1;
+}

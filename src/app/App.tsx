@@ -3,6 +3,7 @@ import { useEffect, useState, type ComponentType } from "react";
 import type { Document } from "../domain/document";
 import type { ReaderNotice } from "../domain/reader-state";
 import { ImportPage } from "../features/import/ImportPage";
+import { ReaderPage } from "../features/reader/ReaderPage";
 import type { ImportResult } from "../features/import/import-controller";
 import { listenToRoutes, navigate, parseRoute, type Route, type RouteResult } from "./router";
 
@@ -14,24 +15,6 @@ export type ReaderPageProps = {
 
 export type ReaderPageComponent = ComponentType<ReaderPageProps>;
 
-function DefaultReaderPage({ document, initialNotice }: ReaderPageProps) {
-  const [notice, setNotice] = useState(initialNotice);
-  return (
-    <main className="app-shell reader-route">
-      <div className="app-shell__eyebrow">Read / Focus</div>
-      <h1>{document.title}</h1>
-      {notice === undefined ? null : (
-        <div className="reader-route__notice" role="status" aria-live="polite">
-          <span>{notice.message}</span>
-          <button type="button" onClick={() => setNotice(undefined)} aria-label="Dismiss notice">
-            Dismiss
-          </button>
-        </div>
-      )}
-      <p>Your reading space is ready.</p>
-    </main>
-  );
-}
 
 function initialRouteResult(): RouteResult {
   return parseRoute(window.location.hash);
@@ -56,7 +39,7 @@ export function App({ readerPage }: AppProps = {}) {
 
   const route: Route = routeResult.ok ? routeResult.route : { name: "home" };
   if (route.name === "read" && importedDocument?.id === route.documentId) {
-    const Reader = readerPage ?? DefaultReaderPage;
+    const Reader = readerPage ?? ReaderPage;
     return <Reader document={importedDocument} initialNotice={importNotice} />;
   }
 
