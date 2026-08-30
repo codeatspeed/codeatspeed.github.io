@@ -182,6 +182,19 @@ describe("reader surface", () => {
     expect(screen.getByTestId("reader-context")).toHaveAttribute("data-layout-mode", "long-word-hold");
     expect(screen.getAllByTestId("reader-active-word")).toHaveLength(1);
   });
+  it("remeasures the next long word from persisted base scale after a reduced hold", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, fontScale: 1.5, showContextByDefault: true });
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    const transitionDocument = documentFixture();
+    transitionDocument.sections[0]!.paragraphs[0]!.sentences[0]!.tokens = [word("x".repeat(100), 2), word("y".repeat(100), 2)];
+    render(<ReaderPage document={transitionDocument} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(screen.getByTestId("reader-context")).toHaveAttribute("data-layout-mode", "long-word-hold");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByTestId("reader-context")).toHaveAttribute("data-layout-mode", "long-word-hold");
+    expect(screen.getByTestId("reader-active-word")).toHaveTextContent("y");
+  });
   it("persists changed reader settings and surfaces write failures", async () => {
     const saveSettings = vi.spyOn(persistence, "saveSettings");
     vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);

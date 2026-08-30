@@ -18,6 +18,8 @@ export type SurfaceMetrics = {
   railX: number;
   horizontalPadding: number;
   gapWidth: number;
+  measurementScale: number;
+  measurementSource: "focus" | "context";
   measure: (token: Token, fontScale: number) => TokenMeasurement;
 };
 
@@ -81,6 +83,8 @@ const DEFAULT_SURFACE_METRICS: SurfaceMetrics = {
   railX: 0.5,
   horizontalPadding: 32,
   gapWidth: 16,
+  measurementScale: 1,
+  measurementSource: "focus",
   measure: fallbackMeasureToken,
 };
 
@@ -255,7 +259,7 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
   }, []);
   const setSurfaceMetrics = useCallback((metrics: SurfaceMetrics) => {
     if (!Number.isFinite(metrics.surfaceWidth) || metrics.surfaceWidth <= 0) return;
-    setSurfaceMetricsState((current) => current.surfaceWidth === metrics.surfaceWidth && current.railX === metrics.railX && current.horizontalPadding === metrics.horizontalPadding && current.gapWidth === metrics.gapWidth ? current : metrics);
+    setSurfaceMetricsState((current) => current.surfaceWidth === metrics.surfaceWidth && current.railX === metrics.railX && current.horizontalPadding === metrics.horizontalPadding && current.gapWidth === metrics.gapWidth && current.measurementScale === metrics.measurementScale && current.measurementSource === metrics.measurementSource ? current : metrics);
   }, []);
   const restartFromCurrentSection = useCallback(() => {
     const current = stream[indexRef.current];

@@ -124,7 +124,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
       const railX = width / 2;
       const activeMeasurement = measureToken(view.activeToken, state.settings.fontScale);
       setRailOffset(computePivotOffset({ beforeWidth: activeMeasurement.beforePivotWidth, pivotWidth: activeMeasurement.pivotWidth, railX }));
-      onSurfaceMetrics?.({ surfaceWidth: width, railX, horizontalPadding, gapWidth, measure: measureToken });
+      onSurfaceMetrics?.({ surfaceWidth: width, railX, horizontalPadding, gapWidth, measurementScale: renderedTypographyScale, measurementSource: state.mode, measure: measureToken });
     };
     reportMetrics();
     if (typeof ResizeObserver !== "undefined") {
@@ -134,7 +134,7 @@ export function ReaderSurface({ document, state, view, onRenderedMode, onSurface
     }
     window.addEventListener("resize", reportMetrics);
     return () => window.removeEventListener("resize", reportMetrics);
-  }, [measureToken, onSurfaceMetrics, state.settings.fontScale, view.activeToken, view.layout.fontScale]);
+  }, [measureToken, onSurfaceMetrics, renderedTypographyScale, state.mode, state.settings.fontScale, view.activeToken, view.layout.fontScale]);
 
   useEffect(() => {
     onRenderedMode({ position: view.activePosition, mode: state.mode === "focus" ? "focus" : view.layout.mode });
