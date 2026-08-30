@@ -79,7 +79,7 @@ function fits(
   return leftBound >= innerLeft && rightBound <= innerRight && rightBound - leftBound <= widthLimit;
 }
 
-function nearestSlice(tokens: Token[], count: number): Token[] {
+function nearestSlice<T>(tokens: T[], count: number): T[] {
   return tokens.slice(Math.max(0, tokens.length - count));
 }
 

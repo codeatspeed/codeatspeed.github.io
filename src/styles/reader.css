@@ -30,7 +30,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-height: clamp(14rem, 48vh, 30rem);
+  column-gap: 1rem;
+  padding-inline: 2rem;
   overflow: hidden;
   border: 1px solid rgba(244, 241, 232, 0.15);
   background: rgba(244, 241, 232, 0.03);
@@ -229,4 +230,13 @@
 .modal-layer--idle .reader-controls:hover,
 .modal-layer--idle .reader-controls:focus-within {
   opacity: 1;
+}
+
+.reader-surface__measure,
+.reader-surface__canvas {
+  position: absolute;
+  inline-size: auto;
+  block-size: auto;
+  visibility: hidden;
+  pointer-events: none;
 }

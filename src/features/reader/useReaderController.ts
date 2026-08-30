@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Document, Token } from "../../domain/document";
 import type { ReaderNotice, ReaderPosition, ReaderState } from "../../domain/reader-state";
 import { DEFAULT_READER_SETTINGS, type ReaderSettings } from "../../domain/settings";
-import { getPosition, getSettings, savePosition, StorageUnavailableError } from "../../lib/persistence/database";
+import { getPosition, getSettings, savePosition, saveSettings, StorageUnavailableError } from "../../lib/persistence/database";
 import { chooseContextWindow, type ContextWindowResult, type TokenMeasurement } from "../../lib/reader/context-window";
 import { createPlayableStream, type PlayableToken } from "../../lib/reader/playable-stream";
 import { timingForToken } from "../../lib/reader/timing";
@@ -11,6 +11,14 @@ import { timingForToken } from "../../lib/reader/timing";
 export type LayoutModeReport = {
   position: ReaderPosition;
   mode: ContextWindowResult["mode"];
+};
+
+export type SurfaceMetrics = {
+  surfaceWidth: number;
+  railX: number;
+  horizontalPadding: number;
+  gapWidth: number;
+  measure: (token: Token, fontScale: number) => TokenMeasurement;
 };
 
 export type ReaderViewModel = {
@@ -29,6 +37,7 @@ export type ReaderController = {
   stepNext(): void;
   setWpm(wpm: number): void;
   setMode(mode: "focus" | "context"): void;
+  setSurfaceMetrics(metrics: SurfaceMetrics): void;
   setRenderedMode(report: LayoutModeReport): void;
   setPhraseSize(size: number): void;
   setExpanded(expanded: boolean): void;
@@ -60,14 +69,20 @@ function validSettings(value: ReaderSettings | undefined): ReaderSettings {
   };
 }
 
-function measureToken(token: Token, scale: number): TokenMeasurement {
-  const graphemeWidth = 16 * scale;
-  return {
-    width: token.graphemes.length * graphemeWidth,
-    beforePivotWidth: token.pivotIndex * graphemeWidth,
-    pivotWidth: graphemeWidth,
-  };
+function fallbackMeasureToken(token: Token, scale: number): TokenMeasurement {
+  const widths = token.graphemes.map((grapheme) => grapheme.length * scale);
+  const pivotWidth = widths[token.pivotIndex] ?? 0;
+  const beforePivotWidth = widths.slice(0, token.pivotIndex).reduce((total, width) => total + width, 0);
+  return { width: widths.reduce((total, width) => total + width, 0), beforePivotWidth, pivotWidth };
 }
+
+const DEFAULT_SURFACE_METRICS: SurfaceMetrics = {
+  surfaceWidth: 1,
+  railX: 0.5,
+  horizontalPadding: 32,
+  gapWidth: 16,
+  measure: fallbackMeasureToken,
+};
 
 function firstPosition(stream: PlayableToken[], document: Document): ReaderPosition {
   return stream[0]?.position ?? { documentId: document.id, sectionIndex: 0, sentenceIndex: 0, tokenIndex: 0 };
@@ -90,6 +105,7 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
     notice: initialNotice,
     expanded: false,
   });
+  const [surfaceMetrics, setSurfaceMetricsState] = useState<SurfaceMetrics>(DEFAULT_SURFACE_METRICS);
   const [announcement, setAnnouncement] = useState("Reader is loading.");
   stateRef.current = state;
 
@@ -108,6 +124,14 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
   const announceManual = useCallback((token: Token, reason: string) => {
     setAnnouncement(`${reason}: ${token.text}.`);
   }, []);
+
+  const persistSettings = useCallback((settings: ReaderSettings) => {
+    void saveSettings(settings).catch((error: unknown) => {
+      if (error instanceof StorageUnavailableError) {
+        setNotice({ kind: "storage-unavailable", message: error.message });
+      }
+    });
+  }, [setNotice]);
 
   const applyIndex = useCallback((nextIndex: number, reason?: string, autoplay = false) => {
     if (stream.length === 0) {
@@ -174,7 +198,7 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
 
   const togglePlayback = useCallback(() => {
     setState((current) => {
-      if (current.status === "loading" || current.status === "error") return current;
+      if (current.status === "loading" || current.status === "error" || current.status === "complete") return current;
       if (current.status === "playing") {
         const active = stream[indexRef.current]?.token;
         if (active) announceManual(active, "Paused");
@@ -205,21 +229,33 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
 
   const setWpm = useCallback((wpm: number) => {
     if (!Number.isFinite(wpm)) return;
-    setState((current) => ({ ...current, settings: { ...current.settings, wpm: Math.min(10_000, Math.max(1, Math.round(wpm))) } }));
-  }, []);
+    const current = stateRef.current;
+    if (!current) return;
+    const settings = { ...current.settings, wpm: Math.min(10_000, Math.max(1, Math.round(wpm))) };
+    setState((value) => ({ ...value, settings }));
+    persistSettings(settings);
+  }, [persistSettings]);
 
   const setMode = useCallback((mode: "focus" | "context") => {
     setState((current) => ({ ...current, mode, renderMode: mode }));
   }, []);
   const setPhraseSize = useCallback((size: number) => {
     if (!Number.isFinite(size)) return;
-    setState((current) => ({ ...current, settings: { ...current.settings, phraseSize: Math.max(1, Math.min(12, Math.floor(size))) } }));
-  }, []);
+    const current = stateRef.current;
+    if (!current) return;
+    const settings = { ...current.settings, phraseSize: Math.max(1, Math.min(12, Math.floor(size))) };
+    setState((value) => ({ ...value, settings }));
+    persistSettings(settings);
+  }, [persistSettings]);
   const setRenderedMode = useCallback((report: LayoutModeReport) => {
     setState((current) => {
       if (!positionEqual(current.position, report.position) || current.renderMode === report.mode) return current;
       return { ...current, renderMode: report.mode };
     });
+  }, []);
+  const setSurfaceMetrics = useCallback((metrics: SurfaceMetrics) => {
+    if (!Number.isFinite(metrics.surfaceWidth) || metrics.surfaceWidth <= 0) return;
+    setSurfaceMetricsState((current) => current.surfaceWidth === metrics.surfaceWidth && current.railX === metrics.railX && current.horizontalPadding === metrics.horizontalPadding && current.gapWidth === metrics.gapWidth ? current : metrics);
   }, []);
   const restartFromCurrentSection = useCallback(() => {
     const current = stream[indexRef.current];
@@ -323,14 +359,14 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
       active: activeEntry.token,
       right,
       phraseSize: state.mode === "context" ? state.settings.phraseSize : 1,
-      maxWidth: 960,
-      surfaceWidth: 960,
-      railX: 480,
-      horizontalPadding: 32,
-      gapWidth: 16,
+      maxWidth: surfaceMetrics.surfaceWidth,
+      surfaceWidth: surfaceMetrics.surfaceWidth,
+      railX: surfaceMetrics.railX,
+      horizontalPadding: surfaceMetrics.horizontalPadding,
+      gapWidth: surfaceMetrics.gapWidth,
       baseFontScale: state.settings.fontScale,
       minFontScale: 0.62,
-      measure: measureToken,
+      measure: surfaceMetrics.measure,
     });
     return {
       activeToken: activeEntry.token,
@@ -338,7 +374,7 @@ export function useReaderController(document: Document, initialNotice?: ReaderNo
       layout,
       progress: stream.length <= 1 ? 0 : indexRef.current / (stream.length - 1),
     };
-  }, [initial, state.mode, state.position, state.settings.fontScale, state.settings.phraseSize, stream]);
+  }, [initial, state.mode, state.position, state.settings.fontScale, state.settings.phraseSize, stream, surfaceMetrics]);
 
-  return { state, view, announcement, togglePlayback, stepPrevious, stepNext, setWpm, setMode, setRenderedMode, setPhraseSize, setExpanded, restartFromCurrentSection, dismissNotice };
+  return { state, view, announcement, togglePlayback, stepPrevious, stepNext, setWpm, setMode, setSurfaceMetrics, setRenderedMode, setPhraseSize, setExpanded, restartFromCurrentSection, dismissNotice };
 }

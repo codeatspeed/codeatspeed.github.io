@@ -34,6 +34,7 @@ function documentFixture(): Document {
 }
 beforeEach(() => {
   vi.spyOn(persistence, "savePosition").mockResolvedValue(undefined);
+  vi.spyOn(persistence, "saveSettings").mockResolvedValue(undefined);
 });
 
 
@@ -157,8 +158,37 @@ describe("reader surface", () => {
     await userEvent.click(screen.getByRole("button", { name: "Next" }));
     await userEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByTestId("reader-active-word")).toHaveTextContent("charlie");
-    expect(screen.getByRole("button", { name: "Restart current section" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Resume" }));
+    expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Previous" }));
     expect(screen.getByTestId("reader-active-word")).toHaveTextContent("bravo");
+  });
+  it("renders only one active word when context falls back to long-word hold", async () => {
+    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, showContextByDefault: true });
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    const longDocument = documentFixture();
+    longDocument.sections[0]!.paragraphs[0]!.sentences[0]!.tokens = [word("supercalifragilisticexpialidocious".repeat(30), 2)];
+    render(<ReaderPage document={longDocument} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    expect(screen.getAllByTestId("reader-active-word")).toHaveLength(1);
+  });
+  it("persists changed reader settings and surfaces write failures", async () => {
+    const saveSettings = vi.spyOn(persistence, "saveSettings");
+    vi.spyOn(persistence, "getSettings").mockResolvedValue(DEFAULT_READER_SETTINGS);
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument());
+    fireEvent.change(screen.getByRole("spinbutton", { name: /words per minute/i }), { target: { value: "700" } });
+    await waitFor(() => expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ wpm: 700 })));
+    cleanup();
+    saveSettings.mockResolvedValue(undefined);
+    vi.spyOn(persistence, "getSettings").mockResolvedValue({ ...DEFAULT_READER_SETTINGS, wpm: 700 });
+    vi.spyOn(persistence, "getPosition").mockResolvedValue(undefined);
+    render(<ReaderPage document={documentFixture()} />);
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: /words per minute/i })).toHaveValue(700));
+    saveSettings.mockRejectedValueOnce(new StorageUnavailableError("settings write unavailable"));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /words per minute/i }), { target: { value: "800" } });
+    await waitFor(() => expect(screen.getByText("settings write unavailable")).toBeInTheDocument());
   });
 });

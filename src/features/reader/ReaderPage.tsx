@@ -12,13 +12,12 @@ export type ReaderPageProps = {
   document: Document;
   initialNotice?: ReaderNotice;
 };
-
 export function ReaderPage({ document, initialNotice }: ReaderPageProps) {
   const controller = useReaderController(document, initialNotice);
-  const closeExpanded = useCallback(() => controller.setExpanded(false), [controller]);
+  const closeExpanded = useCallback(() => controller.setExpanded(false), [controller.setExpanded]);
   const reader = (
     <div className="reader-page__inner">
-      <ReaderSurface document={document} state={controller.state} view={controller.view} onRenderedMode={controller.setRenderedMode} />
+      <ReaderSurface document={document} state={controller.state} view={controller.view} onRenderedMode={controller.setRenderedMode} onSurfaceMetrics={controller.setSurfaceMetrics} />
       <ReaderControls
         document={document}
         state={controller.state}
