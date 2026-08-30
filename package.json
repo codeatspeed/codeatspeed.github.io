@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "verify:metadata": "node scripts/verify-build-metadata.mjs",
     "preview": "vite preview",
     "preview:smoke": "node scripts/serve-pages.mjs dist 4173",
     "test": "vitest run",
