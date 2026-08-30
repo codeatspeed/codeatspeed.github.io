@@ -71,6 +71,7 @@ describe("reader persistence", () => {
       getLastOpenedDocumentId,
       getPosition,
       getSettings,
+      openReaderDatabase,
       saveDocument,
       saveLastOpenedDocumentId,
       savePosition,
@@ -97,7 +98,15 @@ describe("reader persistence", () => {
 
     await saveLastOpenedDocumentId(document.id);
     expect(await getLastOpenedDocumentId()).toBe(document.id);
+
+    const rawDatabase = await openReaderDatabase();
+    expect(await rawDatabase.get("documents", document.id)).toEqual(document);
+    expect(await rawDatabase.get("positions", document.id)).toEqual(overwrittenPosition);
+    expect(await rawDatabase.get("settings", "settings")).toEqual(customSettings);
+    expect(await rawDatabase.get("metadata", "last-opened")).toBe(document.id);
+    rawDatabase.close();
   });
+
 
   it("reports storage failures and keeps the newest position authoritative in memory", async () => {
     const {
@@ -117,4 +126,42 @@ describe("reader persistence", () => {
 
     open.mockRestore();
   });
+  it("maps rejected writes and closes the database while retaining the volatile position", async () => {
+    const {
+      StorageUnavailableError,
+      getPosition,
+      savePosition,
+    } = await import("../../src/lib/persistence/database");
+
+    await savePosition(position);
+    const newestPosition = { ...position, tokenIndex: 10 };
+    const close = vi.spyOn(IDBDatabase.prototype, "close");
+    const put = vi.spyOn(IDBObjectStore.prototype, "put").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    const closeCallsBeforeFailure = close.mock.calls.length;
+
+    await expect(savePosition(newestPosition)).rejects.toBeInstanceOf(StorageUnavailableError);
+    expect(close.mock.calls.length).toBeGreaterThan(closeCallsBeforeFailure);
+    await expect(getPosition(document.id)).resolves.toEqual(newestPosition);
+
+    put.mockRestore();
+    close.mockRestore();
+  });
+
+  it("maps rejected reads and closes the database", async () => {
+    const { StorageUnavailableError, getDocument } = await import("../../src/lib/persistence/database");
+    const close = vi.spyOn(IDBDatabase.prototype, "close");
+    const get = vi.spyOn(IDBObjectStore.prototype, "get").mockImplementation(() => {
+      throw new DOMException("read failed", "UnknownError");
+    });
+    const closeCallsBeforeFailure = close.mock.calls.length;
+
+    await expect(getDocument("read-fails")).rejects.toBeInstanceOf(StorageUnavailableError);
+    expect(close.mock.calls.length).toBeGreaterThan(closeCallsBeforeFailure);
+
+    get.mockRestore();
+    close.mockRestore();
+  });
+
 });
