@@ -8,6 +8,15 @@ export default defineConfig({
   plugins: [
     react(),
     {
+      name: "protect-canonical-placeholder",
+      transformIndexHtml: {
+        order: "pre",
+        handler(html) {
+          return html.replace('href="%BASE_URL%"', 'href="data:text/plain,%BASE_URL%"');
+        },
+      },
+    },
+    {
       name: "resolve-canonical-url",
       transformIndexHtml: {
         order: "post",
